@@ -21,7 +21,11 @@ import com.client.inningstempotracker.ui.preloader.PreloaderScreen
 import com.client.inningstempotracker.ui.settings.SettingsScreen
 
 @Composable
-fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+fun AppNavGraph(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    onThemeChanged: (Boolean) -> Unit = {}
+) {
     NavHost(
         navController = navController,
         startDestination = Screen.Preloader.route,
@@ -155,7 +159,7 @@ fun AppNavGraph(navController: NavHostController, modifier: Modifier = Modifier)
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(onThemeChanged = onThemeChanged)
         }
     }
 }

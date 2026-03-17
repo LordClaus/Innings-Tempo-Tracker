@@ -2,16 +2,21 @@ package com.client.inningstempotracker.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -40,14 +46,29 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onThemeChanged: (Boolean) -> Unit = {}
+) {
     val viewModel: SettingsViewModel = koinViewModel()
     val state by viewModel.state.collectAsState()
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showClearDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let { viewModel.exportData(context, it) }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { viewModel.importData(context, it) }
+    }
 
     LaunchedEffect(state) {
         when (val s = state) {
@@ -63,7 +84,35 @@ fun SettingsScreen() {
         }
     }
 
+    LaunchedEffect(isDarkTheme) {
+        onThemeChanged(isDarkTheme)
+    }
+
     val settingsItems = listOf(
+        SettingsItem(
+            title = "Dark Theme",
+            subtitle = if (isDarkTheme) "Dark mode is on" else "Light mode is on",
+            icon = Icons.Default.DarkMode,
+            onClick = { viewModel.toggleTheme(!isDarkTheme) },
+            trailingContent = {
+                Switch(
+                    checked = isDarkTheme,
+                    onCheckedChange = { viewModel.toggleTheme(it) }
+                )
+            }
+        ),
+        SettingsItem(
+            title = "Export Data",
+            subtitle = "Save matches to JSON file",
+            icon = Icons.Default.Upload,
+            onClick = { exportLauncher.launch("innings_tempo_backup.json") }
+        ),
+        SettingsItem(
+            title = "Import Data",
+            subtitle = "Load matches from JSON file",
+            icon = Icons.Default.Download,
+            onClick = { importLauncher.launch(arrayOf("application/json")) }
+        ),
         SettingsItem(
             title = "Rate App",
             subtitle = "Enjoy the app? Leave a review",
@@ -114,9 +163,7 @@ fun SettingsScreen() {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") }
-            )
+            TopAppBar(title = { Text("Settings") })
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
@@ -127,7 +174,9 @@ fun SettingsScreen() {
         ) {
             Column(modifier = Modifier.padding(Dimensions.md)) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = ColorTokens.Card),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
                     elevation = CardDefaults.cardElevation(Dimensions.cardElevation)
                 ) {
                     SettingsList(items = settingsItems)
@@ -147,19 +196,13 @@ fun SettingsScreen() {
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearLibrary()
-                        showClearDialog = false
-                    }
-                ) {
-                    Text("Delete", color = ColorTokens.Error)
-                }
+                TextButton(onClick = {
+                    viewModel.clearLibrary()
+                    showClearDialog = false
+                }) { Text("Delete", color = ColorTokens.Error) }
             },
             dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showClearDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -175,19 +218,13 @@ fun SettingsScreen() {
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.resetSettings()
-                        showResetDialog = false
-                    }
-                ) {
-                    Text("Reset", color = ColorTokens.Error)
-                }
+                TextButton(onClick = {
+                    viewModel.resetSettings()
+                    showResetDialog = false
+                }) { Text("Reset", color = ColorTokens.Error) }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showResetDialog = false }) { Text("Cancel") }
             }
         )
     }

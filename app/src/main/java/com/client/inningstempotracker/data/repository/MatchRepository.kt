@@ -12,6 +12,8 @@ class MatchRepository(private val matchDao: MatchDao) {
 
     suspend fun getMatchById(matchId: Int): MatchEntity? = matchDao.getMatchById(matchId)
 
+    suspend fun getAllMatchesOnce(): List<MatchEntity> = matchDao.getAllMatchesOnce()
+
     suspend fun insertMatch(match: MatchEntity): Long = matchDao.insertMatch(match)
 
     suspend fun updateMatch(match: MatchEntity) = matchDao.updateMatch(match)

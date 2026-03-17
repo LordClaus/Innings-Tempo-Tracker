@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,7 +25,8 @@ data class SettingsItem(
     val subtitle: String? = null,
     val icon: ImageVector,
     val onClick: () -> Unit,
-    val isDestructive: Boolean = false
+    val isDestructive: Boolean = false,
+    val trailingContent: (@Composable () -> Unit)? = null
 )
 
 @Composable
@@ -37,7 +38,7 @@ fun SettingsList(
         items.forEachIndexed { index, item ->
             SettingsRow(item = item)
             if (index < items.lastIndex) {
-                Divider(color = ColorTokens.Border)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             }
         }
     }
@@ -63,7 +64,8 @@ private fun SettingsRow(item: SettingsItem) {
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (item.isDestructive) ColorTokens.Error else ColorTokens.TextPrimary
+                color = if (item.isDestructive) ColorTokens.Error
+                else MaterialTheme.colorScheme.onSurface
             )
             item.subtitle?.let {
                 Text(
@@ -73,5 +75,6 @@ private fun SettingsRow(item: SettingsItem) {
                 )
             }
         }
+        item.trailingContent?.invoke()
     }
 }
